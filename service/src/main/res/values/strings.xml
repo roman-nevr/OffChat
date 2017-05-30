@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">OffChat</string>
+    <string name="service_process_name">org.berendeev.roma.offchat.service</string>
+    <string name="message_action">org.berendeev.roma.offchat.service.BOT_BROADCAST</string>
+</resources>
