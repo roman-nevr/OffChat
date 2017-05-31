@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
@@ -14,7 +13,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import org.berendeev.roma.offchat.R;
-import org.berendeev.roma.offchat.app.MainActivity;
+import org.berendeev.roma.offchat.presentation.MainActivity;
 
 
 public class BotService extends Service {

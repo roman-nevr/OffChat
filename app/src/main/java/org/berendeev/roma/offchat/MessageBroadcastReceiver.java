@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import org.berendeev.roma.offchat.presentation.App;
 import org.berendeev.roma.offchat.service.presentation.MainService;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
