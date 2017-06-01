@@ -9,7 +9,7 @@ import android.provider.BaseColumns;
 public class DatabaseOpenHelper extends SQLiteOpenHelper implements BaseColumns{
 
     private static final String DATABASE_NAME = "offchat.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     //_ID | TIME | OWNER | TEXT | IMAGE
     public static final String CHAT_TABLE = "feeds";
@@ -24,11 +24,11 @@ public class DatabaseOpenHelper extends SQLiteOpenHelper implements BaseColumns{
 
     @Override public void onCreate(SQLiteDatabase db) {
         String script = "create table " + CHAT_TABLE + " (" +
-                _ID + " integer primary key, " +
+                _ID + " integer primary key autoincrement, " +
                 TIME + " integer not null, " +
                 TEXT + " text not null, " +
                 OWNER + " text not null, " +
-                IMAGE + " text not null);";
+                IMAGE + " text);";
         db.execSQL(script);
     }
 

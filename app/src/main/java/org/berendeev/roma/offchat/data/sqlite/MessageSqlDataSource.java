@@ -50,23 +50,23 @@ public class MessageSqlDataSource {
         for (Message message : messages) {
             saveMessage(message);
         }
-
     }
 
-//    public Message getMess(String link){
-//        String selection = String.format("%1s = ?", LINK);
-//        String[] selectionArgs = {link};
-//        Cursor cursor = null;
-//        Message message;
-//        cursor = database.query(CHAT_TABLE, null, selection, selectionArgs, null, null, null, null);
-//        if(cursor.moveToFirst()){
-//            message = getMessageFromCursor(cursor);
-//        }else {
-//            message = Message.EMPTY;
-//        }
-//        cursor.close();
-//        return message;
-//    }
+    public List<Message> getAllAfterTime(long time){
+        List<Message> messages = new ArrayList<>();
+
+        String selection = String.format("%1s > ?", TIME);
+        String[] selectionArgs = {String.valueOf(time)};
+
+        String orderBy = TIME + " ASC";
+        Cursor cursor = database.query(CHAT_TABLE, null, selection, selectionArgs, null, null, orderBy);
+
+        while (cursor.moveToNext()){
+            messages.add(getMessageFromCursor(cursor));
+        }
+        cursor.close();
+        return messages;
+    }
 
     public void removeAll(){
         int a = database.delete(CHAT_TABLE, "1", null);
@@ -75,17 +75,11 @@ public class MessageSqlDataSource {
         }
     }
 
-//    public boolean isEmpty(){
-//        Cursor cursor = database.query(CHAT_TABLE, null, null, null, null, null, null,
-//                null);
-//        boolean result = !cursor.moveToNext();
-//        cursor.close();
-//        return result;
-//    }
-
     private void fillContentValues(Message message){
         contentValues.clear();
-        contentValues.put(_ID, message.id());
+        if (message.id() != -1){
+            contentValues.put(_ID, message.id());
+        }
         contentValues.put(TIME, message.time());
         contentValues.put(OWNER, message.owner().name());
         contentValues.put(TEXT, message.text());
@@ -104,8 +98,17 @@ public class MessageSqlDataSource {
                 cursor.getLong(timeIndex),
                 Message.Owner.valueOf(cursor.getString(ownerIndex)),
                 cursor.getString(textIndex),
-                Image.create(cursor.getString(imageIndex))
-                );
+                getImage(cursor.getString(imageIndex))
+        );
+    }
+
+    private Image getImage(String path) {
+        Image image = Image.create(path);
+        if (image.equals(Image.EMPTY)){
+            return Image.EMPTY;
+        }else {
+            return image;
+        }
     }
 
 

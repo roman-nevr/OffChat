@@ -1,5 +1,9 @@
 package org.berendeev.roma.offchat.data;
 
+import android.content.Context;
+
+import org.berendeev.roma.offchat.data.prefs.LastSeenTimeDataSource;
+import org.berendeev.roma.offchat.data.sqlite.MessageSqlDataSource;
 import org.berendeev.roma.offchat.domain.ChatRepository;
 import org.berendeev.roma.offchat.domain.model.Image;
 import org.berendeev.roma.offchat.domain.model.Message;
@@ -9,6 +13,7 @@ import java.util.List;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.subjects.BehaviorSubject;
 
 import static org.berendeev.roma.offchat.domain.model.Message.Owner.me;
@@ -18,39 +23,31 @@ import static org.berendeev.roma.offchat.domain.model.Message.Owner.notMe;
 public class ChatRepositoryImpl implements ChatRepository {
 
     private List<Message> messages = new ArrayList<>();
-    private long id = 0;
     private BehaviorSubject<List<Message>> messagesSubject;
-    private long lastSeenTime = 0;
+    private long lastSeenTime;
 
-    public ChatRepositoryImpl() {
+    private int number = 0;
+
+    private MessageSqlDataSource sqlDataSource;
+    private LastSeenTimeDataSource lastSeenTimeDataSource;
+
+    public ChatRepositoryImpl(MessageSqlDataSource sqlDataSource, LastSeenTimeDataSource lastSeenTimeDataSource) {
+        this.sqlDataSource = sqlDataSource;
+        this.lastSeenTimeDataSource = lastSeenTimeDataSource;
+
+        sqlDataSource.removeAll();
+
         messagesSubject = BehaviorSubject.create();
-        startFakeLoop();
+        lastSeenTime = lastSeenTimeDataSource.getLastSeenTime();
+//        startFakeLoop();
     }
 
     @Override public Observable<List<Message>> getMessagesObservable() {
         lastSeenTime = getCurrentTime();
-        return messagesSubject;
-    }
-
-    void startFakeLoop(){
-        new Thread(new Runnable() {
-            @Override public void run() {
-                boolean finish = false;
-                while (!finish){
-                    Message message = Message.create(id++, getCurrentTime(), notMe, "message " + id, Image.EMPTY);
-                    addMessage(message);
-                    try {
-                        Thread.sleep(3000);
-                    }catch (InterruptedException e){
-                        finish = true;
-                    }
-                }
-            }
-        }).start();
-    }
-
-    private long getCurrentTime() {
-        return System.currentTimeMillis();
+        return messagesSubject.doOnDispose(() -> {
+            lastSeenTime = getCurrentTime();
+            lastSeenTimeDataSource.saveLastSeenTime(lastSeenTime);
+        });
     }
 
     @Override public Completable sendMessage(String message) {
@@ -65,31 +62,63 @@ public class ChatRepositoryImpl implements ChatRepository {
         });
     }
 
+    @Override public Completable newIncomeMessage(String text) {
+        return Completable.fromAction(() -> {
+            Message message = Message.create(-1, getCurrentTime(), notMe, text, Image.EMPTY);
+            saveMessage(message);
+        });
+    }
+
+    private void saveMessage(Message message){
+        sqlDataSource.saveMessage(message);
+        List<Message> allMessages = sqlDataSource.getAllMessages();
+        messagesSubject.onNext(allMessages);
+    }
+
+    @Override public Single<List<Message>> getUnreadMessages() {
+        return Single.fromCallable(() -> {
+            lastSeenTime = lastSeenTimeDataSource.getLastSeenTime();
+            return sqlDataSource.getAllAfterTime(lastSeenTime);
+        });
+    }
+
+    private long getCurrentTime() {
+        return System.currentTimeMillis();
+    }
+
     private void sendNewMessage(String text, String imagePath){
         Message newMessage;
-        if (imagePath != null){
+        if (imagePath != null && !imagePath.isEmpty()){
             newMessage = createMessage(text, imagePath);
         }else {
             newMessage = createMessage(text);
         }
-        addMessage(newMessage);
-    }
-
-    @Override public Completable newIncomeMessage(Message message) {
-        return null;
-    }
-
-    private void addMessage(Message message){
-        messages.add(message);
-        messagesSubject.onNext(messages);
+        saveMessage(newMessage);
     }
 
     private Message createMessage(String message, String imagePath){
-        return Message.create(id++, getCurrentTime(), me, message, Image.create(imagePath));
+        return Message.create(-1, getCurrentTime(), me, message, Image.create(imagePath));
     }
 
     private Message createMessage(String message){
-        return Message.create(id++, getCurrentTime(), me, message, Image.EMPTY);
+        return Message.create(-1, getCurrentTime(), me, message, Image.EMPTY);
+    }
+
+    private void startFakeLoop(){
+        new Thread(new Runnable() {
+            @Override public void run() {
+                boolean finish = false;
+                while (!finish){
+                    Message message = Message.create(-1, getCurrentTime(), notMe, "message " + ++number, Image.EMPTY);
+                    saveMessage(message);
+                    try {
+                        Thread.sleep(3000);
+                    }catch (InterruptedException e){
+                        finish = true;
+                    }
+                }
+            }
+        }).start();
     }
 
 }

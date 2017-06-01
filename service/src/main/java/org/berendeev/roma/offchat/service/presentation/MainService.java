@@ -29,22 +29,20 @@ public class MainService extends Service {
 
     public void onCreate() {
         super.onCreate();
-        Log.d(LOG_TAG, "MyService onCreate");
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
     }
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(LOG_TAG, "onCommand");
         int command = intent.getIntExtra(COMMAND, 0);
 
         if (command == START) {
             if (thread == null) {
                 thread = new ToastThread();
                 thread.start();
-                sendNotification();
+                startForeground(SERVICE_NOTIFICATION_ID, getNotification());
             } else {
-                showToast("already started");
+//                showToast("already started");
             }
         } else if (command == STOP) {
             if (thread != null) {
@@ -97,6 +95,7 @@ public class MainService extends Service {
             while (!finish) {
 //                showToast(null);
                 sendBroadcast();
+//                showToast(null);
                 try {
                     Thread.sleep(3000);
                 } catch (InterruptedException e) {
@@ -109,18 +108,20 @@ public class MainService extends Service {
     }
 
     @Override public void onDestroy() {
-        Log.d(LOG_TAG, "destroyed");
+        stopForeground(true);
         super.onDestroy();
     }
 
-    private void sendNotification() {
+    private Notification getNotification() {
         Notification notification = new Notification.Builder(this)
-                .setContentTitle("Service started")
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("Bot started")
+                .setContentText("Message bot works")
+                .setSmallIcon(R.mipmap.ic_launcher_round)
                 .build();
 
 //        notification.flags |= Notification.FLAG_NO_CLEAR;
-        notificationManager.notify(SERVICE_NOTIFICATION_ID, notification);
+//        notificationManager.notify(SERVICE_NOTIFICATION_ID, notification);
+        return notification;
     }
 
     private void clearNotification() {

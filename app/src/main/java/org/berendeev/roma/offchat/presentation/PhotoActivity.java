@@ -11,10 +11,14 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
@@ -29,12 +33,16 @@ import butterknife.ButterKnife;
 
 public class PhotoActivity extends AppCompatActivity {
 
-    public static final String PATH = "path";
-    public static final int ACTION_OPEN_GALLERY = 2;
-    @BindView(R.id.camera) Button cameraButton;
-    @BindView(R.id.gallery) Button galleryButton;
-    @BindView(R.id.imageView) ImageView imageView;
 
+//    @BindView(R.id.camera) Button cameraButton;
+//    @BindView(R.id.gallery) Button galleryButton;
+//    @BindView(R.id.imageView) ImageView imageView;
+
+    @BindView(R.id.editText) EditText editText;
+    @BindView(R.id.text2) TextView textView;
+
+    private static final String PATH = "path";
+    private static final int ACTION_OPEN_GALLERY = 2;
     private static final int ACTION_TAKE_PHOTO = 1;
     private static final String JPEG_FILE_PREFIX = "IMG_";
     private static final String JPEG_FILE_SUFFIX = ".jpg";
@@ -46,18 +54,41 @@ public class PhotoActivity extends AppCompatActivity {
         setContentView(R.layout.photo);
         ButterKnife.bind(this);
 
-        cameraButton.setOnClickListener(v -> {
-            dispatchTakePictureIntent();
-        });
-        galleryButton.setOnClickListener(v -> {
-            dispatchOpenGallery();
-        });
+//        cameraButton.setOnClickListener(v -> {
+//            dispatchTakePictureIntent();
+//        });
+//        galleryButton.setOnClickListener(v -> {
+//            dispatchOpenGallery();
+//        });
+
 
 //        Uri uri = Uri.parse("/storage/sdcard/DCIM/offchat/IMG_20170531_060929_-1720877472.jpg");
 //        Uri uri = Uri.fromFile(new File("/storage/sdcard/DCIM/offchat/IMG_20170531_060929_-1720877472.jpg"));
 //        Picasso.with(this)
 //                .load(uri)
 //                .into(imageView);
+    }
+
+    private void initExp() {
+        editText.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                textView.setText(s);
+            }
+
+            @Override public void afterTextChanged(Editable s) {
+
+            }
+        });
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        initExp();
+
     }
 
     private void dispatchOpenGallery() {
@@ -177,37 +208,37 @@ public class PhotoActivity extends AppCompatActivity {
 
     private void setPicture() {
 
-		/* There isn't enough memory to open up more than a couple camera photos */
-        /* So pre-scale the target bitmap into which the file is decoded */
-
-		/* Get the size of the ImageView */
-        int targetW = imageView.getWidth();
-        int targetH = imageView.getHeight();
-
-		/* Get the size of the image */
-        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-        bmOptions.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
-        int photoW = bmOptions.outWidth;
-        int photoH = bmOptions.outHeight;
-
-		/* Figure out which way needs to be reduced less */
-        int scaleFactor = 1;
-        if ((targetW > 0) || (targetH > 0)) {
-            scaleFactor = Math.min(photoW / targetW, photoH / targetH);
-        }
-
-		/* Set bitmap options to scale the image decode target */
-        bmOptions.inJustDecodeBounds = false;
-        bmOptions.inSampleSize = scaleFactor;
-        bmOptions.inPurgeable = true;
-
-		/* Decode the JPEG file into a Bitmap */
-        Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
-
-		/* Associate the Bitmap to the ImageView */
-        imageView.setImageBitmap(bitmap);
-        imageView.setVisibility(View.VISIBLE);
+//		/* There isn't enough memory to open up more than a couple camera photos */
+//        /* So pre-scale the target bitmap into which the file is decoded */
+//
+//		/* Get the size of the ImageView */
+//        int targetW = imageView.getWidth();
+//        int targetH = imageView.getHeight();
+//
+//		/* Get the size of the image */
+//        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+//        bmOptions.inJustDecodeBounds = true;
+//        BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
+//        int photoW = bmOptions.outWidth;
+//        int photoH = bmOptions.outHeight;
+//
+//		/* Figure out which way needs to be reduced less */
+//        int scaleFactor = 1;
+//        if ((targetW > 0) || (targetH > 0)) {
+//            scaleFactor = Math.min(photoW / targetW, photoH / targetH);
+//        }
+//
+//		/* Set bitmap options to scale the image decode target */
+//        bmOptions.inJustDecodeBounds = false;
+//        bmOptions.inSampleSize = scaleFactor;
+//        bmOptions.inPurgeable = true;
+//
+//		/* Decode the JPEG file into a Bitmap */
+//        Bitmap bitmap = BitmapFactory.decodeFile(currentPhotoPath, bmOptions);
+//
+//		/* Associate the Bitmap to the ImageView */
+//        imageView.setImageBitmap(bitmap);
+//        imageView.setVisibility(View.VISIBLE);
     }
 
     private void notifyGalleryAboutNewPicture() {

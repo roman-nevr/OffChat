@@ -22,6 +22,9 @@ public class App extends Application {
         registerActivityLifecycleCallbacks(new MyActivityLifecycleCallback());
         initDi();
         initPicasso();
+
+
+        getString(R.string.album_name);
     }
 
     private void initDi() {

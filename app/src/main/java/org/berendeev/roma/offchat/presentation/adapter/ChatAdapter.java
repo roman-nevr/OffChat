@@ -17,6 +17,7 @@ import com.squareup.picasso.Picasso;
 import org.berendeev.roma.offchat.domain.ImageProvider;
 import org.berendeev.roma.offchat.domain.model.Image;
 import org.berendeev.roma.offchat.domain.model.Message;
+import org.berendeev.roma.offchat.presentation.App;
 import org.berendeev.roma.offchat.presentation.R;
 
 import java.io.File;
@@ -29,6 +30,7 @@ import butterknife.ButterKnife;
 
 import static android.view.Gravity.END;
 import static android.view.Gravity.START;
+import static java.lang.Enum.valueOf;
 import static org.berendeev.roma.offchat.domain.model.Message.Owner.me;
 
 
@@ -39,12 +41,13 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
     private final Context context;
     private List<Message> messages;
 
-    @Inject ImageProvider imageProvider;
+    private ImageProvider imageProvider;
 
     public ChatAdapter(List<Message> messages, Context context) {
         this.messages = messages;
         this.context = context;
         hasStableIds();
+        imageProvider = App.getChatComponent().imageProvider();
     }
 
     @Override public long getItemId(int position) {
@@ -82,8 +85,11 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
                 holder.linearLayout.setGravity(START);
                 holder.message.setGravity(START);
             }
+            holder.imageView.setVisibility(View.INVISIBLE);
         } else {
+            holder.message.setText(message.text());
             imageProvider.provide(message.image(), holder.imageView);
+            holder.imageView.setVisibility(View.VISIBLE);
         }
 
     }
