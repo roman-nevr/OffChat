@@ -9,7 +9,6 @@ import java.util.List;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.annotations.Nullable;
 import io.reactivex.subjects.BehaviorSubject;
 
 import static org.berendeev.roma.offchat.domain.model.Message.Owner.me;
@@ -21,26 +20,16 @@ public class ChatRepositoryImpl implements ChatRepository {
     private List<Message> messages = new ArrayList<>();
     private long id = 0;
     private BehaviorSubject<List<Message>> messagesSubject;
+    private long lastSeenTime = 0;
 
     public ChatRepositoryImpl() {
         messagesSubject = BehaviorSubject.create();
+        startFakeLoop();
     }
 
     @Override public Observable<List<Message>> getMessagesObservable() {
-        startFakeLoop();
+        lastSeenTime = getCurrentTime();
         return messagesSubject;
-//        return Observable.create(emitter -> {
-//            while (!emitter.isDisposed()){
-//                Message message = Message.create(id++, notMe, "message " + id, Image.EMPTY);
-//                messages.add(message);
-//                emitter.onNext(messages);
-//                try {
-//                    Thread.sleep(3000);
-//                }catch (InterruptedException e){
-//                    emitter.onError(e);
-//                }
-//            }
-//        });
     }
 
     void startFakeLoop(){
@@ -48,7 +37,7 @@ public class ChatRepositoryImpl implements ChatRepository {
             @Override public void run() {
                 boolean finish = false;
                 while (!finish){
-                    Message message = Message.create(id++, notMe, "message " + id, Image.EMPTY);
+                    Message message = Message.create(id++, getCurrentTime(), notMe, "message " + id, Image.EMPTY);
                     addMessage(message);
                     try {
                         Thread.sleep(3000);
@@ -58,7 +47,10 @@ public class ChatRepositoryImpl implements ChatRepository {
                 }
             }
         }).start();
+    }
 
+    private long getCurrentTime() {
+        return System.currentTimeMillis();
     }
 
     @Override public Completable sendMessage(String message) {
@@ -93,11 +85,11 @@ public class ChatRepositoryImpl implements ChatRepository {
     }
 
     private Message createMessage(String message, String imagePath){
-        return Message.create(id++, me, message, Image.create(imagePath));
+        return Message.create(id++, getCurrentTime(), me, message, Image.create(imagePath));
     }
 
     private Message createMessage(String message){
-        return Message.create(id++, me, message, Image.EMPTY);
+        return Message.create(id++, getCurrentTime(), me, message, Image.EMPTY);
     }
 
 }
