@@ -34,7 +34,7 @@
             android:name="org.berendeev.roma.offchat.service.BotService"
             android:process="@string/service_process_name"/>
         <receiver
-            android:name="org.berendeev.roma.offchat.MessageBroadcastReceiver">
+            android:name="org.berendeev.roma.offchat.data.MessageBroadcastReceiver">
             <intent-filter>
                 <action android:name="org.berendeev.roma.offchat.service.BOT_BROADCAST"/>
                 <category android:name="android.intent.category.DEFAULT"/>

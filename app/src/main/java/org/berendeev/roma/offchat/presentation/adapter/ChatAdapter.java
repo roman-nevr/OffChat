@@ -21,6 +21,7 @@ import org.berendeev.roma.offchat.presentation.App;
 import org.berendeev.roma.offchat.presentation.R;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -38,18 +39,15 @@ import static org.berendeev.roma.offchat.domain.model.Message.Owner.me;
 
 public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHolder> {
 
-    public static final int NOT_ME_VIEW_TYPE = 0;
-    public static final int ME_VIEW_TYPE = 1;
-    private final Context context;
     private List<Message> messages;
+    @Inject ImageProvider imageProvider;
+    @Inject DateFormat format;
 
-    private ImageProvider imageProvider;
-
-    public ChatAdapter(List<Message> messages, Context context) {
+    public ChatAdapter(List<Message> messages) {
         this.messages = messages;
-        this.context = context;
         hasStableIds();
-        imageProvider = App.getChatComponent().imageProvider();
+//        imageProvider = App.getChatComponent().imageProvider();
+        App.getChatComponent().inject(this);
     }
 
     @Override public long getItemId(int position) {
@@ -57,20 +55,9 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
         return messages.get(position).hashCode();
     }
 
-//    @Override public int getItemViewType(int position) {
-//        position = getReversePosition(position);
-//        return messages.get(position).owner() == me ? ME_VIEW_TYPE : NOT_ME_VIEW_TYPE;
-//    }
-
     @Override public MessageViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = null;
-//        if (viewType == ME_VIEW_TYPE){
-//            view = inflate(R.layout.chat_item, parent);
-//        }
-//        if (viewType == NOT_ME_VIEW_TYPE){
-//        }
-
-        view = inflate(R.layout.chat_item, parent);
+        view = inflate(R.layout.chat_item_linear, parent);
         return new MessageViewHolder(view);
     }
 
@@ -98,6 +85,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
             holder.linearLayout.setGravity(START);
             holder.message.setGravity(START);
         }
+        holder.time.setText(format.format(message.time()));
     }
 
     @Override public void onViewDetachedFromWindow(MessageViewHolder holder) {
@@ -129,6 +117,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
         @BindView(R.id.message) TextView message;
         @BindView(R.id.item_layout) LinearLayout linearLayout;
         @BindView(R.id.image) ImageView imageView;
+        @BindView(R.id.time) TextView time;
 
         public MessageViewHolder(View itemView) {
             super(itemView);

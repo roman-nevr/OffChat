@@ -24,7 +24,7 @@ public class ImageProviderImpl implements ImageProvider {
         Uri uri = Uri.fromFile(new File(image.source()));
         Picasso.with(context)
                 .load(uri)
-                .resizeDimen(R.dimen.image_width, R.dimen.image_width)
+                .resizeDimen(R.dimen.image_size, R.dimen.image_size)
                 .centerCrop()
                 .into(imageView);
     }

@@ -4,13 +4,17 @@ import android.content.Context;
 
 import org.berendeev.roma.offchat.data.ChatRepositoryImpl;
 import org.berendeev.roma.offchat.data.ImageProviderImpl;
-import org.berendeev.roma.offchat.data.LocationRepositoryImpl;
+import org.berendeev.roma.offchat.data.LocationHelperImpl;
+import org.berendeev.roma.offchat.data.SettingsRepositoryImpl;
 import org.berendeev.roma.offchat.data.prefs.LastSeenTimeDataSource;
 import org.berendeev.roma.offchat.data.sqlite.DatabaseOpenHelper;
 import org.berendeev.roma.offchat.data.sqlite.MessageSqlDataSource;
 import org.berendeev.roma.offchat.domain.ChatRepository;
 import org.berendeev.roma.offchat.domain.ImageProvider;
-import org.berendeev.roma.offchat.domain.LocationRepository;
+import org.berendeev.roma.offchat.domain.LocationHelper;
+import org.berendeev.roma.offchat.domain.SettingsRepository;
+
+import java.text.DateFormat;
 
 import javax.inject.Singleton;
 
@@ -64,7 +68,19 @@ public class ChatModule {
 
     @Singleton
     @Provides
-    public LocationRepository provideLocationRepository(Context context){
-        return new LocationRepositoryImpl(context);
+    public LocationHelper provideLocationHelper(Context context){
+        return new LocationHelperImpl(context);
+    }
+
+    @Singleton
+    @Provides
+    public SettingsRepository provideSettingsRepository(Context context){
+        return new SettingsRepositoryImpl(context);
+    }
+
+    @Singleton
+    @Provides
+    public DateFormat provideDateFormat(Context context){
+        return android.text.format.DateFormat.getTimeFormat(context);
     }
 }

@@ -101,7 +101,7 @@ public class App extends Application {
         }
 
         @Override public void onActivityStopped(Activity activity) {
-            if (activity instanceof MainActivity && activity.isFinishing()){
+            if (activity instanceof MainActivity){
                 mainActivityStarted = false;
             }
         }
@@ -111,9 +111,6 @@ public class App extends Application {
         }
 
         @Override public void onActivityDestroyed(Activity activity) {
-            if (activity instanceof MainActivity && activity.isFinishing()){
-                mainActivityStarted = false;
-            }
         }
     }
 }

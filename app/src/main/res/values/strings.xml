@@ -10,4 +10,6 @@
     <string name="btnIntendV">Take Video</string>
     <string name="cannot">Cannot</string>
     <string name="new_messages_notification_title">You have new messages</string>
+    <string name="notification_title">Notifications</string>
+    <string name="new_messages">%1$d new messages</string>
 </resources>
