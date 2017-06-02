@@ -46,7 +46,6 @@ public class MessageBroadcastReceiver extends BroadcastReceiver {
                 .newIncomeMessage(text)
                 .subscribe();
         if (!App.isMainActivityStarted() && settingsRepository.isShowNotifications()){
-            Log.d("myTag", "on foreground");
             chatRepository
                     .getUnreadMessages()
                     .subscribe((messages, throwable) -> {

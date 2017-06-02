@@ -23,11 +23,8 @@ import static org.berendeev.roma.offchat.domain.model.Message.Owner.notMe;
 
 public class ChatRepositoryImpl implements ChatRepository {
 
-    private List<Message> messages = new ArrayList<>();
     private BehaviorSubject<List<Message>> messagesSubject;
     private long lastSeenTime;
-
-    private int number = 0;
 
     private MessageSqlDataSource sqlDataSource;
     private LastSeenTimeDataSource lastSeenTimeDataSource;
@@ -40,7 +37,6 @@ public class ChatRepositoryImpl implements ChatRepository {
 
         messagesSubject = BehaviorSubject.createDefault(sqlDataSource.getAllMessages());
         lastSeenTime = lastSeenTimeDataSource.getLastSeenTime();
-//        startFakeLoop();
     }
 
     @Override public Observable<List<Message>> getMessagesObservable() {
@@ -111,23 +107,6 @@ public class ChatRepositoryImpl implements ChatRepository {
 
     private Message createMessage(String message){
         return Message.create(-1, getCurrentTime(), me, message, Image.EMPTY);
-    }
-
-    private void startFakeLoop(){
-        new Thread(new Runnable() {
-            @Override public void run() {
-                boolean finish = false;
-                while (!finish){
-                    Message message = Message.create(-1, getCurrentTime(), notMe, "message " + ++number, Image.EMPTY);
-                    saveMessage(message);
-                    try {
-                        Thread.sleep(3000);
-                    }catch (InterruptedException e){
-                        finish = true;
-                    }
-                }
-            }
-        }).start();
     }
 
 }

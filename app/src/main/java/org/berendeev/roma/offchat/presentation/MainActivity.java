@@ -178,7 +178,9 @@ public class MainActivity extends AppCompatActivity implements MainView, Locatio
     }
 
     @Override public void connectionFailed(ConnectionResult connectionResult) {
-        Toast.makeText(this, "connectionFailed", Toast.LENGTH_SHORT).show();
+        if (BuildConfig.DEBUG){
+            Toast.makeText(this, "connectionFailed", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override public void executePermissionsRequest(String[] permissions) {

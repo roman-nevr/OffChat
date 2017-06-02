@@ -3,7 +3,6 @@ package org.berendeev.roma.offchat.data;
 import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -61,10 +60,7 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
             } else {
                 callbacks.onLocation(lastLocation);
             }
-//            startLocationUpdates();
         } catch (SecurityException e) {
-//            callbacks.connectionFailed(null);
-//            locationStateSubject.onNext(DEFAULT.toBuilder().state(disconnected).build());
         }
     }
 
@@ -164,24 +160,18 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
         result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
             @Override public void onResult(@NonNull LocationSettingsResult result) {
                 final Status status = result.getStatus();
-//                final LocationSettingsStates states = result.getLocationSettingsStates();
                 switch (status.getStatusCode()) {
                     case LocationSettingsStatusCodes.SUCCESS:
-                        //location available
-//                        requestUpdates();
                         requestLocation(callbacks);
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         if(status.hasResolution() && !permissionRejected){
                             PendingIntent pendingIntent = status.getResolution();
                             callbacks.executeResolutionRequest(pendingIntent);
-//                            Intent intent = new Intent();
-//                            intent.putExtra(PENDING_INTENT, pendingIntent);
                         }
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                         permissionRejected = true;
-//                        locationStateSubject.onNext(DEFAULT.toBuilder().state(permissionsRejected).build());
                         break;
                 }
             }
