@@ -16,8 +16,6 @@ public class StartReceiver extends BroadcastReceiver {
         this.context = context;
         String action = intent.getAction();
         if (action.equalsIgnoreCase(BOOT_ACTION)) {
-            // здесь ваш код
-            // например, запускаем уведомление
             Intent serviceIntent = new Intent(context, MainService.class);
             serviceIntent.putExtra(MainService.COMMAND, START);
             context.startService(serviceIntent);
