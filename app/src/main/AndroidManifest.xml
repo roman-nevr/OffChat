@@ -22,17 +22,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".PhotoActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-
-        <service
-            android:name="org.berendeev.roma.offchat.service.BotService"
-            android:process="@string/service_process_name"/>
         <receiver
             android:name="org.berendeev.roma.offchat.data.MessageBroadcastReceiver">
             <intent-filter>
