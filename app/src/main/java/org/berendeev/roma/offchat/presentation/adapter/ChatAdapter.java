@@ -30,6 +30,8 @@ import butterknife.ButterKnife;
 
 import static android.view.Gravity.END;
 import static android.view.Gravity.START;
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 import static java.lang.Enum.valueOf;
 import static org.berendeev.roma.offchat.domain.model.Message.Owner.me;
 
@@ -77,21 +79,32 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.MessageViewHol
         Message message = messages.get(position);
 
         if (message.image() == Image.EMPTY) {
-            holder.message.setText(message.text());
-            if (message.owner() == me) {
-                holder.linearLayout.setGravity(END);
-                holder.message.setGravity(END);
-            } else {
-                holder.linearLayout.setGravity(START);
-                holder.message.setGravity(START);
-            }
-            holder.imageView.setVisibility(View.INVISIBLE);
-        } else {
-            holder.message.setText(message.text());
+            holder.imageView.setVisibility(GONE);
+        }else {
+            holder.imageView.setVisibility(VISIBLE);
             imageProvider.provide(message.image(), holder.imageView);
-            holder.imageView.setVisibility(View.VISIBLE);
         }
 
+        if (message.text().isEmpty()){
+            holder.message.setVisibility(GONE);
+        }else {
+            holder.message.setVisibility(VISIBLE);
+            holder.message.setText(message.text());
+        }
+        if (message.owner() == me) {
+            holder.linearLayout.setGravity(END);
+            holder.message.setGravity(END);
+        } else {
+            holder.linearLayout.setGravity(START);
+            holder.message.setGravity(START);
+        }
+    }
+
+    @Override public void onViewDetachedFromWindow(MessageViewHolder holder) {
+        int adapterPosition = holder.getAdapterPosition();
+        if (adapterPosition != RecyclerView.NO_POSITION && messages.get(adapterPosition).image() != Image.EMPTY){
+            imageProvider.stopLoading(holder.imageView);
+        }
     }
 
     @Override public int getItemCount() {

@@ -1,5 +1,7 @@
 package org.berendeev.roma.offchat.domain;
 
+import android.location.Location;
+
 import org.berendeev.roma.offchat.domain.model.Message;
 
 import java.util.List;
@@ -19,4 +21,6 @@ public interface ChatRepository {
     Completable newIncomeMessage(String text);
 
     Single<List<Message>> getUnreadMessages();
+
+    Completable sendLocation(Location location);
 }

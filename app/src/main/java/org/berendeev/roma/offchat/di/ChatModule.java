@@ -4,11 +4,13 @@ import android.content.Context;
 
 import org.berendeev.roma.offchat.data.ChatRepositoryImpl;
 import org.berendeev.roma.offchat.data.ImageProviderImpl;
+import org.berendeev.roma.offchat.data.LocationRepositoryImpl;
 import org.berendeev.roma.offchat.data.prefs.LastSeenTimeDataSource;
 import org.berendeev.roma.offchat.data.sqlite.DatabaseOpenHelper;
 import org.berendeev.roma.offchat.data.sqlite.MessageSqlDataSource;
 import org.berendeev.roma.offchat.domain.ChatRepository;
 import org.berendeev.roma.offchat.domain.ImageProvider;
+import org.berendeev.roma.offchat.domain.LocationRepository;
 
 import javax.inject.Singleton;
 
@@ -58,5 +60,11 @@ public class ChatModule {
     @Provides
     public ChatRepository provideChatRepository(MessageSqlDataSource sqlDataSource, LastSeenTimeDataSource timeDataSource){
         return new ChatRepositoryImpl(sqlDataSource, timeDataSource);
+    }
+
+    @Singleton
+    @Provides
+    public LocationRepository provideLocationRepository(Context context){
+        return new LocationRepositoryImpl(context);
     }
 }

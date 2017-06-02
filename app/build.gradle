@@ -70,4 +70,7 @@ dependencies {
     compile 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.0.2'
     //OkHttp
     compile 'com.squareup.okhttp:okhttp:2.4.0'
+    //Stetho
+    compile 'com.facebook.stetho:stetho:1.4.2'
+    compile 'com.facebook.stetho:stetho-okhttp3:1.4.2'
 }

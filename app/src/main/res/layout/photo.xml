@@ -20,6 +20,7 @@
         app:layout_constraintLeft_toLeftOf="parent"/>
 
     <TextView
+        android:freezesText="true"
         android:id="@+id/text2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

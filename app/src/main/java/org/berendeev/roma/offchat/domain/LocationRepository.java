@@ -9,6 +9,10 @@ import io.reactivex.Observable;
 public interface LocationRepository {
     String PENDING_INTENT = "pending_intent";
 
+    public static final int REQUEST_CHECK_SETTINGS = 42;
+    public static final int LOCATION_PERMISSION_REQUEST_ID = 43;
+    public static final int RESOLUTION_REQUEST_ID = 44;
+
     void connect();
 
     void disconnect();
@@ -18,4 +22,6 @@ public interface LocationRepository {
     Observable<Location> getLocationObservable();
 
     Observable<LocationState> getLocationStateObservable();
+
+    Location getLastKnownLocation();
 }

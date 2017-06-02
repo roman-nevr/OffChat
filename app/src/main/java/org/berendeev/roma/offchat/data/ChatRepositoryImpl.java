@@ -1,6 +1,7 @@
 package org.berendeev.roma.offchat.data;
 
 import android.content.Context;
+import android.location.Location;
 
 import org.berendeev.roma.offchat.data.prefs.LastSeenTimeDataSource;
 import org.berendeev.roma.offchat.data.sqlite.MessageSqlDataSource;
@@ -35,9 +36,9 @@ public class ChatRepositoryImpl implements ChatRepository {
         this.sqlDataSource = sqlDataSource;
         this.lastSeenTimeDataSource = lastSeenTimeDataSource;
 
-        sqlDataSource.removeAll();
+//        sqlDataSource.removeAll();
 
-        messagesSubject = BehaviorSubject.create();
+        messagesSubject = BehaviorSubject.createDefault(sqlDataSource.getAllMessages());
         lastSeenTime = lastSeenTimeDataSource.getLastSeenTime();
 //        startFakeLoop();
     }
@@ -79,6 +80,14 @@ public class ChatRepositoryImpl implements ChatRepository {
         return Single.fromCallable(() -> {
             lastSeenTime = lastSeenTimeDataSource.getLastSeenTime();
             return sqlDataSource.getAllAfterTime(lastSeenTime);
+        });
+    }
+
+    @Override public Completable sendLocation(Location location) {
+        return Completable.fromAction(() -> {
+            if (location != null){
+                sendNewMessage(location.toString(), null);
+            }
         });
     }
 

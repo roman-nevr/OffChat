@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements MainView{
         super.onStart();
         presenter.start();
         if (BuildConfig.DEBUG){
-//            startBot();
+            startBot();
         }
     }
 
@@ -93,7 +93,6 @@ public class MainActivity extends AppCompatActivity implements MainView{
 
 
     private void initDi() {
-//        repository = App.getChatComponent().chatRepository();
         App.getChatComponent().inject(this);
         presenter.setView(this);
     }
@@ -138,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements MainView{
         if (adapter == null){
             adapter = new ChatAdapter(messages, getApplicationContext());
             recyclerView.setAdapter(adapter);
+            recyclerView.scrollToPosition(0);
         }else{
             adapter.update(messages);
         }
@@ -150,7 +150,6 @@ public class MainActivity extends AppCompatActivity implements MainView{
     @Override protected void onStop() {
         super.onStop();
         presenter.stop();
-//        Toast.makeText(this, "Oops", Toast.LENGTH_LONG).show();
     }
 
     private void dispatchOpenGallery() {

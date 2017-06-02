@@ -1,19 +1,14 @@
 package org.berendeev.roma.offchat.data;
 
-import android.Manifest;
-import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -28,24 +23,25 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import org.berendeev.roma.offchat.domain.LocationRepository;
 import org.berendeev.roma.offchat.domain.model.LocationState;
 
-
 import io.reactivex.Observable;
 import io.reactivex.subjects.BehaviorSubject;
 
 import static org.berendeev.roma.offchat.domain.model.LocationState.DEFAULT;
-import static org.berendeev.roma.offchat.domain.model.LocationState.State.*;
+import static org.berendeev.roma.offchat.domain.model.LocationState.State.connectionFailed;
+import static org.berendeev.roma.offchat.domain.model.LocationState.State.disconnected;
+import static org.berendeev.roma.offchat.domain.model.LocationState.State.ok;
+import static org.berendeev.roma.offchat.domain.model.LocationState.State.permissionsRejected;
+import static org.berendeev.roma.offchat.domain.model.LocationState.State.requestPermissions;
+import static org.berendeev.roma.offchat.domain.model.LocationState.State.requestResolution;
 
 public class LocationRepositoryImpl implements LocationRepository, ConnectionCallbacks, OnConnectionFailedListener, LocationListener {
 
-    public static final int REQUEST_CHECK_SETTINGS = 42;
-    public static final int LOCATION_PERMISSION_REQUEST_ID = 43;
-    public static final int RESOLUTION_REQUEST_ID = 44;
+
 
     private Context context;
 
@@ -117,7 +113,7 @@ public class LocationRepositoryImpl implements LocationRepository, ConnectionCal
 
     private void startLocationUpdates() {
         if (googleApiClient != null && googleApiClient.isConnected()) {
-            if (LocationRepositoryImpl.isPermissionsGranted(context)) {
+            if (LocationUtils.isPermissionsGranted(context)) {
                 checkSettings();
             } else {
                 requestLocationPermissions();
@@ -203,10 +199,10 @@ public class LocationRepositoryImpl implements LocationRepository, ConnectionCal
         return locationStateSubject;
     }
 
-    public static boolean isPermissionsGranted(Context context) {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                && ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    @Override public Location getLastKnownLocation() {
+        return getLastLocation();
     }
+
 
     @Override
     public void onRequestResult(int requestCode, int resultCode) {
@@ -219,11 +215,7 @@ public class LocationRepositoryImpl implements LocationRepository, ConnectionCal
         }
     }
 
-    public static void requestResolution(Fragment fragment, PendingIntent pendingIntent) throws IntentSender.SendIntentException {
-        if(pendingIntent != null) {
-            fragment.startIntentSenderForResult(pendingIntent.getIntentSender(), RESOLUTION_REQUEST_ID, null, 0, 0, 0, new Bundle());
-        }
-    }
+
 
     public void requestResolution(Fragment fragment) throws IntentSender.SendIntentException {
         if(pendingIntent != null) {
@@ -231,19 +223,7 @@ public class LocationRepositoryImpl implements LocationRepository, ConnectionCal
         }
     }
 
-    public static void requestResolution(Activity activity, PendingIntent pendingIntent) throws IntentSender.SendIntentException {
-        if(pendingIntent != null) {
-            ActivityCompat.startIntentSenderForResult(activity, pendingIntent.getIntentSender(), RESOLUTION_REQUEST_ID, null, 0, 0, 0, new Bundle());
-        }
-    }
 
-    public static void requestLocationPermissions(Fragment fragment) {
-        fragment.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_ID);
-    }
-
-    public static void requestLocationPermissions(Activity activity) {
-        ActivityCompat.requestPermissions(activity, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_ID);
-    }
 
     public void openLocationSettings(Fragment fragment){
         fragment.startActivity(new Intent(

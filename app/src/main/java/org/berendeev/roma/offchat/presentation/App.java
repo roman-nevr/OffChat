@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
 
+import com.facebook.stetho.Stetho;
 import com.squareup.picasso.OkHttpDownloader;
 import com.squareup.picasso.Picasso;
 
@@ -22,9 +23,9 @@ public class App extends Application {
         registerActivityLifecycleCallbacks(new MyActivityLifecycleCallback());
         initDi();
         initPicasso();
-
-
-        getString(R.string.album_name);
+        if (BuildConfig.DEBUG){
+            initStetho();
+        }
     }
 
     private void initDi() {
@@ -54,6 +55,31 @@ public class App extends Application {
         return 10 * 1024 * 1024;
     }
 
+    private void initStetho(){
+        if(!BuildConfig.DEBUG){
+            return;
+        }
+        // Create an InitializerBuilder
+        Stetho.InitializerBuilder initializerBuilder =
+                Stetho.newInitializerBuilder(this);
+
+        // Enable Chrome DevTools
+        initializerBuilder.enableWebKitInspector(
+                Stetho.defaultInspectorModulesProvider(this)
+        );
+
+        // Enable command line interface
+        initializerBuilder.enableDumpapp(
+                Stetho.defaultDumperPluginsProvider(this)
+        );
+
+        // Use the InitializerBuilder to generate an Initializer
+        Stetho.Initializer initializer = initializerBuilder.build();
+
+        // Initialize Stetho with the Initializer
+        Stetho.initialize(initializer);
+    }
+
     private class MyActivityLifecycleCallback implements ActivityLifecycleCallbacks {
 
         @Override public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -75,7 +101,7 @@ public class App extends Application {
         }
 
         @Override public void onActivityStopped(Activity activity) {
-            if (activity instanceof MainActivity){
+            if (activity instanceof MainActivity && activity.isFinishing()){
                 mainActivityStarted = false;
             }
         }
@@ -85,7 +111,9 @@ public class App extends Application {
         }
 
         @Override public void onActivityDestroyed(Activity activity) {
-
+            if (activity instanceof MainActivity && activity.isFinishing()){
+                mainActivityStarted = false;
+            }
         }
     }
 }

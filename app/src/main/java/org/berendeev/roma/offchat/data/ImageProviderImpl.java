@@ -8,6 +8,7 @@ import com.squareup.picasso.Picasso;
 
 import org.berendeev.roma.offchat.domain.ImageProvider;
 import org.berendeev.roma.offchat.domain.model.Image;
+import org.berendeev.roma.offchat.presentation.R;
 
 import java.io.File;
 
@@ -23,6 +24,13 @@ public class ImageProviderImpl implements ImageProvider {
         Uri uri = Uri.fromFile(new File(image.source()));
         Picasso.with(context)
                 .load(uri)
+                .resizeDimen(R.dimen.image_width, R.dimen.image_width)
+                .centerCrop()
                 .into(imageView);
+    }
+
+    @Override public void stopLoading(ImageView imageView) {
+        Picasso.with(context)
+                .cancelRequest(imageView);
     }
 }
