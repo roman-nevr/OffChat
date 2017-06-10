@@ -29,6 +29,8 @@ import org.berendeev.roma.offchat.domain.model.LocationState;
 
 import io.reactivex.Observable;
 
+import static android.app.Activity.RESULT_OK;
+
 public class LocationHelperImpl extends LocationHelper implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient
         .OnConnectionFailedListener, LocationListener {
 
@@ -36,8 +38,9 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
     private Context context;
     private LocationCallbacks callbacks;
     private LocationRequest locationRequest;
+    private boolean needUpdates;
 
-    //todo persist value
+    //todo persist value?
     private boolean permissionRejected;
 
     public LocationHelperImpl(Context context) {
@@ -55,7 +58,11 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
             if (lastLocation == null) {
                 LocationAvailability locationAvailability = LocationServices.FusedLocationApi.getLocationAvailability(googleApiClient);
                 if (locationAvailability == null || !locationAvailability.isLocationAvailable()) {
-                    //not available
+                    if (isPermissionsGranted(context)) {
+                        checkSettings();
+                    } else {
+                        requestLocationPermissions();
+                    }
                 }
             } else {
                 callbacks.onLocation(lastLocation);
@@ -83,6 +90,7 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
     }
 
     @Override public Observable<LocationState> getLocationStateObservable() {
+        //todo implement updates
         return null;
     }
 
@@ -109,19 +117,28 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
 
     }
 
-    private void requestUpdates() throws SecurityException {
-        LocationServices.FusedLocationApi.requestLocationUpdates(
-                googleApiClient, locationRequest, this);
+    @Override public void requestUpdates(LocationCallbacks callbacks, int interval, int fastestInterval, Priority priority) {
+        createLocationRequest(interval, fastestInterval, priority.getValue());
+        needUpdates = true;
     }
 
     @Override public void onActivityResult(int requestCode, int resultCode) {
-
+        if (requestCode == RESOLUTION_REQUEST_ID){
+            if (resultCode == RESULT_OK){
+                Location location = getLastLocation();
+                callbacks.onLocation(location);
+            }else {
+                callbacks.onLocationNotAvailable();
+            }
+        }
     }
 
     @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == LOCATION_PERMISSION_REQUEST_ID){
-                if (isPermissionsGranted()){
+                if (isPermissionsGranted(permissions, grantResults)){
                     requestLocation(callbacks);
+                }else {
+                    callbacks.onLocationNotAvailable();
                 }
             }
     }
@@ -133,7 +150,6 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
         } catch (SecurityException e) {
             return null;
         }
-
     }
 
     private void startLocationUpdates() {
@@ -172,10 +188,19 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
                         break;
                     case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                         permissionRejected = true;
+                        callbacks.onLocationNotAvailable();
                         break;
                 }
             }
         });
+    }
+
+    private void createLocationRequest(int interval, int fastestInterval, int priority) {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(interval);
+//        locationRequest.setFastestInterval(60 * 60 * 1000);
+        locationRequest.setFastestInterval(fastestInterval);
+        locationRequest.setPriority(priority);
     }
 
     private void createLocationRequest() {
@@ -185,7 +210,12 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
         locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
     }
 
-    public boolean isPermissionsGranted() {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    public boolean isPermissionsGranted(String[] permissions, int[] grantResults) {
+        boolean granted = true;
+        for (int grantResult : grantResults) {
+//            if (grantResult == 1)
+        }
+        return granted;
+//        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 }

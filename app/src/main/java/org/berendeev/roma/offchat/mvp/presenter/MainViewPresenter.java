@@ -31,6 +31,7 @@ import io.reactivex.schedulers.Schedulers;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
+import static org.berendeev.roma.offchat.domain.LocationHelper.RESOLUTION_REQUEST_ID;
 
 public class MainViewPresenter {
 
@@ -235,6 +236,7 @@ public class MainViewPresenter {
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        locationHelper.onActivityResult(requestCode, resultCode);
         switch (requestCode) {
             case ACTION_TAKE_PHOTO: {
                 if (resultCode == RESULT_OK) {

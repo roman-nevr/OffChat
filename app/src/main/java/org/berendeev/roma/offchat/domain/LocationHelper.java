@@ -14,6 +14,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.location.LocationRequest;
 
 import org.berendeev.roma.offchat.domain.model.LocationState;
 
@@ -28,13 +29,11 @@ public abstract class LocationHelper {
 
     public abstract void disconnect();
 
-//    void onRequestResult(int requestCode, int resultCode);
-
-//    Observable<Location> getLocationObservable();
-
     public abstract Observable<LocationState> getLocationStateObservable();
 
     public abstract void requestLocation(LocationCallbacks callbacks);
+
+    public abstract void requestUpdates(LocationCallbacks callbacks, int interval, int fastestInterval, Priority priority);
 
     public abstract void onActivityResult(int requestCode, int resultCode);
 
@@ -65,6 +64,15 @@ public abstract class LocationHelper {
         return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
+    public enum Priority{
+        NO_POWER {public int getValue(){return LocationRequest.PRIORITY_NO_POWER;}},
+        LOW_POWER {public int getValue(){return LocationRequest.PRIORITY_LOW_POWER;}},
+        BALANCED_POWER_ACCURACY {public int getValue(){return LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;}},
+        HIGH_ACCURACY {public int getValue(){return LocationRequest.PRIORITY_HIGH_ACCURACY;}};
+
+        public abstract int getValue();
+    }
+
     public interface LocationCallbacks{
         void connectionFailed(ConnectionResult connectionResult);
 
@@ -73,5 +81,7 @@ public abstract class LocationHelper {
         void executeResolutionRequest(PendingIntent pendingIntent);
 
         void onLocation(Location location);
+
+        void onLocationNotAvailable();
     }
 }

@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements MainView, Locatio
     @Override protected void onStart() {
         super.onStart();
         presenter.start();
-        startBot();
+//        startBot();
 
     }
 
@@ -196,6 +196,10 @@ public class MainActivity extends AppCompatActivity implements MainView, Locatio
 
     @Override public void onLocation(Location location) {
         presenter.onLocation(location);
+    }
+
+    @Override public void onLocationNotAvailable() {
+
     }
 
     @Override
