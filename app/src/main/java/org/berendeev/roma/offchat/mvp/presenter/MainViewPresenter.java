@@ -15,7 +15,6 @@ import org.berendeev.roma.offchat.domain.ChatRepository;
 import org.berendeev.roma.offchat.domain.LocationHelper;
 import org.berendeev.roma.offchat.domain.SettingsRepository;
 import org.berendeev.roma.offchat.mvp.view.MainView;
-import org.berendeev.roma.offchat.presentation.MainActivity;
 import org.berendeev.roma.offchat.presentation.R;
 
 import java.io.File;
@@ -31,7 +30,6 @@ import io.reactivex.schedulers.Schedulers;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-import static org.berendeev.roma.offchat.domain.LocationHelper.RESOLUTION_REQUEST_ID;
 
 public class MainViewPresenter {
 
@@ -73,7 +71,8 @@ public class MainViewPresenter {
     }
 
     public void onLocationClick(){
-        locationHelper.requestLocation(locationCallbacks);
+        locationHelper.requestLocation(locationCallbacks, LocationHelper.Priority.LOW_POWER, 10000);
+//        locationHelper.requestLocationUpdates(locationCallbacks, 1000, 1000, LocationHelper.Priority.HIGH_ACCURACY);
     }
 
     public void sendMessage(String text){
@@ -103,9 +102,11 @@ public class MainViewPresenter {
                     view.setMessages(messages);
                 }));
     }
+//auth gXtbDI0I8FHOHjhu
+//    geo fix 54,706058 38,843262
 
     public void onLocation(Location location) {
-        locationHelper.disconnect();
+//        locationHelper.stopUpdates();
         repository
                 .sendLocation(location)
                 .subscribeOn(Schedulers.computation())

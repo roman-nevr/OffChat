@@ -27,13 +27,11 @@ public abstract class LocationHelper {
     public static final int LOCATION_PERMISSION_REQUEST_ID = 43;
     public static final int RESOLUTION_REQUEST_ID = 44;
 
-    public abstract void disconnect();
+    public abstract void requestLocation(LocationCallbacks callbacks, Priority priority, int expirationDuration);
 
-    public abstract Observable<LocationState> getLocationStateObservable();
+    public abstract void requestLocationUpdates(LocationCallbacks callbacks, int interval, int fastestInterval, Priority priority);
 
-    public abstract void requestLocation(LocationCallbacks callbacks);
-
-    public abstract void requestUpdates(LocationCallbacks callbacks, int interval, int fastestInterval, Priority priority);
+    public abstract void stopUpdates();
 
     public abstract void onActivityResult(int requestCode, int resultCode);
 
@@ -54,23 +52,52 @@ public abstract class LocationHelper {
                 LOCATION_PERMISSION_REQUEST_ID);
     }
 
-    public static void requestResolution(Fragment fragment, PendingIntent pendingIntent) throws IntentSender.SendIntentException {
+    protected static void requestResolution(Fragment fragment, PendingIntent pendingIntent) throws IntentSender.SendIntentException {
         if(pendingIntent != null) {
             fragment.startIntentSenderForResult(pendingIntent.getIntentSender(), RESOLUTION_REQUEST_ID, null, 0, 0, 0, new Bundle());
         }
     }
 
-    public static boolean isPermissionsGranted(Context context) {
-        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    protected static boolean isAllPermissionsGranted(Context context, String[] permissions) {
+        for (String permission : permissions) {
+            if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED){
+                return false;
+            }
+        }
+        return true;
     }
 
     public enum Priority{
-        NO_POWER {public int getValue(){return LocationRequest.PRIORITY_NO_POWER;}},
-        LOW_POWER {public int getValue(){return LocationRequest.PRIORITY_LOW_POWER;}},
-        BALANCED_POWER_ACCURACY {public int getValue(){return LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;}},
-        HIGH_ACCURACY {public int getValue(){return LocationRequest.PRIORITY_HIGH_ACCURACY;}};
+        NO_POWER {
+            private String[] permissions = {Manifest.permission.ACCESS_COARSE_LOCATION};
+            @Override public int getValue(){return LocationRequest.PRIORITY_NO_POWER;}
+
+            @Override public String[] getPermissions() {return permissions;}
+        },
+        LOW_POWER {
+            private String[] permissions = {Manifest.permission.ACCESS_COARSE_LOCATION};
+            @Override public int getValue(){return LocationRequest.PRIORITY_LOW_POWER;}
+
+            @Override public String[] getPermissions() {
+                return new String[0];
+            }
+        },
+        BALANCED_POWER_ACCURACY {
+            private String[] permissions = {Manifest.permission.ACCESS_COARSE_LOCATION};
+            @Override public int getValue(){return LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;}
+
+            @Override public String[] getPermissions() {return permissions;}
+        },
+        HIGH_ACCURACY {
+            private String[] permissions = {Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION};
+            @Override public int getValue(){return LocationRequest.PRIORITY_HIGH_ACCURACY;}
+
+            @Override public String[] getPermissions() {return permissions;}
+        };
 
         public abstract int getValue();
+
+        public abstract String[] getPermissions();
     }
 
     public interface LocationCallbacks{
@@ -83,5 +110,7 @@ public abstract class LocationHelper {
         void onLocation(Location location);
 
         void onLocationNotAvailable();
+
+        void onPermissionsRejected();
     }
 }

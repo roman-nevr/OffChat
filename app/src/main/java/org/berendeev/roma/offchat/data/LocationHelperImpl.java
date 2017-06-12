@@ -1,15 +1,13 @@
 package org.berendeev.roma.offchat.data;
 
-import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import android.support.v7.appcompat.BuildConfig;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -25,11 +23,9 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import org.berendeev.roma.offchat.domain.LocationHelper;
-import org.berendeev.roma.offchat.domain.model.LocationState;
-
-import io.reactivex.Observable;
 
 import static android.app.Activity.RESULT_OK;
+import static android.support.v4.content.PermissionChecker.PERMISSION_DENIED;
 
 public class LocationHelperImpl extends LocationHelper implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient
         .OnConnectionFailedListener, LocationListener {
@@ -37,8 +33,7 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
     private final GoogleApiClient googleApiClient;
     private Context context;
     private LocationCallbacks callbacks;
-    private LocationRequest locationRequest;
-    private boolean needUpdates;
+    private Behavior behavior;
 
     //todo persist value?
     private boolean permissionRejected;
@@ -58,21 +53,23 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
             if (lastLocation == null) {
                 LocationAvailability locationAvailability = LocationServices.FusedLocationApi.getLocationAvailability(googleApiClient);
                 if (locationAvailability == null || !locationAvailability.isLocationAvailable()) {
-                    if (isPermissionsGranted(context)) {
+                    if (isAllPermissionsGranted(context, behavior.getPermissions())) {
                         checkSettings();
                     } else {
+                        //may be you forgot declare some permissions in manifest
+                        //or may be user turn off some permissions
                         requestLocationPermissions();
                     }
                 }
             } else {
-                callbacks.onLocation(lastLocation);
+                behavior.onLocationReceived(lastLocation);
             }
         } catch (SecurityException e) {
         }
     }
 
     @Override public void onConnectionSuspended(int i) {
-
+        int a = 0;
     }
 
     @Override public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
@@ -80,53 +77,56 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
     }
 
     @Override public void onLocationChanged(Location location) {
-        callbacks.onLocation(location);
+        behavior.onLocationReceived(location);
     }
 
-    @Override public void disconnect() {
+    @Override public void stopUpdates() {
+        try {
+            LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, this);
+        }catch (SecurityException e){
+            if (BuildConfig.DEBUG){
+                e.printStackTrace();
+            }
+        }
         if (googleApiClient != null && googleApiClient.isConnected()) {
             googleApiClient.disconnect();
         }
     }
 
-    @Override public Observable<LocationState> getLocationStateObservable() {
-        //todo implement updates
-        return null;
+    @Override public void requestLocation(LocationCallbacks callbacks, Priority priority, int expirationDuration) {
+        setLocationCallbacks(callbacks);
+        behavior = new SingleLocationRequestBehavior(priority, expirationDuration);
+        requestLocation();
     }
 
-    @Override public void requestLocation(LocationCallbacks callbacks) {
-
-        if (callbacks == null) {
-            throw new IllegalArgumentException("callback must be defined");
-        }
-        this.callbacks = callbacks;
-
+    private void requestLocation(){
         if (googleApiClient != null && googleApiClient.isConnected()){
-            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                if (!permissionRejected){
-                    callbacks.executePermissionsRequest(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION});
-                }
+            //todo
+            if (!isAllPermissionsGranted(context, behavior.getPermissions()) && !permissionRejected) {
+                    callbacks.executePermissionsRequest(behavior.getPermissions());
             }
-            Location lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);
-            callbacks.onLocation(lastLocation);
+            Location lastLocation = getLastLocation();
+            if (lastLocation != null){
+                behavior.onLocationReceived(lastLocation);
+            }
         }else {
             if (googleApiClient != null){
                 googleApiClient.connect();
             }
         }
-
     }
 
-    @Override public void requestUpdates(LocationCallbacks callbacks, int interval, int fastestInterval, Priority priority) {
-        createLocationRequest(interval, fastestInterval, priority.getValue());
-        needUpdates = true;
+    @Override public void requestLocationUpdates(LocationCallbacks callbacks, int interval, int fastestInterval, Priority priority) {
+//        createLocationRequest(interval, fastestInterval, priority.getValue());
+        setLocationCallbacks(callbacks);
+        behavior = new LocationUpdatesBehavior(interval, fastestInterval, priority);
+        requestLocation();
     }
 
     @Override public void onActivityResult(int requestCode, int resultCode) {
         if (requestCode == RESOLUTION_REQUEST_ID){
             if (resultCode == RESULT_OK){
-                Location location = getLastLocation();
-                callbacks.onLocation(location);
+                behavior.onPermissionsGranted();
             }else {
                 callbacks.onLocationNotAvailable();
             }
@@ -136,9 +136,10 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
     @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == LOCATION_PERMISSION_REQUEST_ID){
                 if (isPermissionsGranted(permissions, grantResults)){
-                    requestLocation(callbacks);
+                    behavior.onPermissionsGranted();
                 }else {
-                    callbacks.onLocationNotAvailable();
+//                    permissionRejected = true;
+                    callbacks.onPermissionsRejected();
                 }
             }
     }
@@ -152,24 +153,28 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
         }
     }
 
+   /**
+    * check settings before call this method
+    */
+
     private void startLocationUpdates() {
-        if (googleApiClient != null && googleApiClient.isConnected()) {
-            if (isPermissionsGranted(context)) {
-                checkSettings();
-            } else {
-                requestLocationPermissions();
+        try {
+            LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, behavior.getRequest(),this);
+        }catch (SecurityException e){
+            if (BuildConfig.DEBUG){
+                e.printStackTrace();
             }
+            callbacks.onLocationNotAvailable();
         }
     }
 
     private void requestLocationPermissions() {
-        callbacks.executePermissionsRequest(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION});
+        callbacks.executePermissionsRequest(behavior.getPermissions());
     }
 
     private void checkSettings() {
-        createLocationRequest();
         LocationSettingsRequest.Builder locationSettingsBuilder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(locationRequest);
+                .addLocationRequest(behavior.getRequest());
         PendingResult<LocationSettingsResult> result =
                 LocationServices.SettingsApi.checkLocationSettings(googleApiClient,
                         locationSettingsBuilder.build());
@@ -178,7 +183,7 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
                 final Status status = result.getStatus();
                 switch (status.getStatusCode()) {
                     case LocationSettingsStatusCodes.SUCCESS:
-                        requestLocation(callbacks);
+                        behavior.onSettingsSuccess();
                         break;
                     case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                         if(status.hasResolution() && !permissionRejected){
@@ -195,27 +200,108 @@ public class LocationHelperImpl extends LocationHelper implements GoogleApiClien
         });
     }
 
-    private void createLocationRequest(int interval, int fastestInterval, int priority) {
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(interval);
-//        locationRequest.setFastestInterval(60 * 60 * 1000);
-        locationRequest.setFastestInterval(fastestInterval);
-        locationRequest.setPriority(priority);
-    }
-
-    private void createLocationRequest() {
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(60 * 60 * 1000);
-        locationRequest.setFastestInterval(60 * 60 * 1000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_LOW_POWER);
-    }
-
     public boolean isPermissionsGranted(String[] permissions, int[] grantResults) {
-        boolean granted = true;
         for (int grantResult : grantResults) {
-//            if (grantResult == 1)
+            //todo check is it right
+            if (grantResult == PERMISSION_DENIED){
+                if (BuildConfig.DEBUG){
+                    Log.d("location", "permission denied");
+                }
+                return false;
+            }
         }
-        return granted;
-//        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+        return true;
+    }
+
+    private void setLocationCallbacks(LocationCallbacks callbacks){
+        if (callbacks == null) {
+            throw new IllegalArgumentException("callback must be defined");
+        }
+        this.callbacks = callbacks;
+    }
+
+    private abstract class Behavior{
+        abstract LocationRequest getRequest();
+
+        abstract String[] getPermissions();
+
+        abstract void onSettingsSuccess();
+
+        abstract void onLocationReceived(Location location);
+
+        void onPermissionsGranted() {
+            checkSettings();
+        }
+    }
+
+    private class SingleLocationRequestBehavior extends Behavior{
+
+        private LocationRequest request;
+        private Priority priority;
+        private int expirationDuration;
+
+        SingleLocationRequestBehavior(Priority priority, int expirationDuration) {
+            request = new LocationRequest();
+            request.setPriority(priority.getValue());
+            this.priority = priority;
+            this.expirationDuration = expirationDuration;
+        }
+
+        LocationRequest getRequest() {
+            return request;
+        }
+
+        @Override String[] getPermissions() {
+            return priority.getPermissions();
+        }
+
+        @Override public void onSettingsSuccess() {
+            Location lastLocation = getLastLocation();
+            if (lastLocation == null){
+                waitForUpdate();
+            }else {
+                callbacks.onLocation(lastLocation);
+            }
+        }
+
+        private void waitForUpdate() {
+            request.setNumUpdates(1).setExpirationDuration(expirationDuration);
+            startLocationUpdates();
+        }
+
+        @Override void onLocationReceived(Location location) {
+            googleApiClient.disconnect();
+            callbacks.onLocation(location);
+        }
+    }
+
+    private class LocationUpdatesBehavior extends Behavior{
+
+        private LocationRequest request;
+        private Priority priority;
+
+        LocationUpdatesBehavior(int interval, int fastestInterval, Priority priority) {
+            request = new LocationRequest();
+            request.setInterval(interval);
+            request.setFastestInterval(fastestInterval);
+            request.setPriority(priority.getValue());
+            this.priority = priority;
+        }
+
+        @Override LocationRequest getRequest() {
+            return request;
+        }
+
+        @Override String[] getPermissions() {
+            return priority.getPermissions();
+        }
+
+        @Override public void onSettingsSuccess() {
+            startLocationUpdates();
+        }
+
+        @Override void onLocationReceived(Location location) {
+            callbacks.onLocation(location);
+        }
     }
 }

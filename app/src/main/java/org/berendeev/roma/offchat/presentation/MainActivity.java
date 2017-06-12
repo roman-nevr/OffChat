@@ -19,6 +19,7 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.location.LocationServices;
 
 import org.berendeev.roma.offchat.domain.LocationHelper;
 import org.berendeev.roma.offchat.domain.LocationHelper.LocationCallbacks;
@@ -200,6 +201,10 @@ public class MainActivity extends AppCompatActivity implements MainView, Locatio
 
     @Override public void onLocationNotAvailable() {
 
+    }
+
+    @Override public void onPermissionsRejected() {
+        //whine
     }
 
     @Override
